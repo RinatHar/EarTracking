@@ -1,0 +1,16 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+kpt_shape: [1, 3]
+flip_idx: [0]
+
+nc: 1
+names: ['ear']
+
+roboflow:
+  workspace: nutrition5k
+  project: earsdetectionpose
+  version: 2
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/nutrition5k/earsdetectionpose/dataset/2
