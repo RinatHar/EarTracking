@@ -1,18 +1,33 @@
-Ссылка на датасет
-https://universe.roboflow.com/nutrition5k/earsdetectionpose
+## 🚀 Проект: Наложение сережки в реальном времени
 
-Ссылка на файл Colab, в котором проходило обучение модели:
-https://colab.research.google.com/drive/1KNQFQwYkOfSydX9erGszpfqHrqCHgkHJ?usp=sharing
+### 📁 Информация о данных и обучении
+* **Датасет (EarsDetectionPose):** [RoboFlow Universe](https://universe.roboflow.com/nutrition5k/earsdetectionpose)
+* **Файл обучения:** [Google Colab](https://colab.research.google.com/drive/1KNQFQwYkOfSydX9erGszpfqHrqCHgkHJ?usp=sharing)
+* **Локальный путь к датасету:** `./EarsDetectionPose/`
+* **Результаты работы модели:** `./result/`
 
-Расположение датасета в репозитории:
-*./EarsDetectionPose*
+### 🛠 Быстрый старт
 
-## Запуск:
-Создание окружения:
-`pip -m venv venv`
-Активация окружения:
-`venv/Scripts/activate`
-Скачивание зависимостей:
-`pip install -r requirements.txt`
-Запуск файла для наложения сережки в реальном времени через камеру:
-`python main.py`
+1. **Создание окружения:**
+   ```bash
+   python -m venv venv
+   ```
+2. **Активация окружения:**
+   * Windows:   
+   ```bash
+   python -m venv venv
+   ```
+   * MacOS/Linux:   
+   ```bash
+   source venv/bin/activate
+   ```
+3. **Установка зависимостей:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Запуск файла для наложения сережки в реальном времени через камеру:**
+   ```bash
+   python main.py
+   ```
+   
