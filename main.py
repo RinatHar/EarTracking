@@ -3,12 +3,9 @@ import numpy as np
 from ultralytics import YOLO
 import os
 
-# 1. ЗАГРУЗКА МОДЕЛИ И СЕРЕЖКИ
-# MODEL_PATH = "best.pt"  # Путь к вашей модели
-MODEL_PATH = "best.pt"  # Путь к вашей модели
-EARRING_PATH = "earring.png"  # Путь к изображению сережки
+MODEL_PATH = "best.pt"
+EARRING_PATH = "earring.png"
 
-# Проверка существования файлов
 if not os.path.exists(MODEL_PATH):
     print(f"ОШИБКА: Модель не найдена по пути: {MODEL_PATH}")
     exit(1)
@@ -24,33 +21,21 @@ if earring_img is not None:
     h, w = earring_img.shape[:2]
     print(f"Загружена сережка: {w}x{h} пикселей")
     
-    # Автоматическое уменьшение если слишком большая
     if max(h, w) > 300:
-        print("Уменьшаю сережку до разумного размера...")
         scale_factor = 300.0 / max(h, w)
         new_w = int(w * scale_factor)
         new_h = int(h * scale_factor)
         earring_img = cv2.resize(earring_img, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
         print(f"Новый размер: {new_w}x{new_h} пикселей")
-else:
-    print(f"Сережка не найдена по пути: {EARRING_PATH}")
-    print("Создаю тестовую сережку...")
-    earring_img = np.zeros((150, 150, 4), dtype=np.uint8)
-    cv2.circle(earring_img, (75, 75), 60, (255, 0, 0, 255), -1)  # Синий круг
-    cv2.circle(earring_img, (75, 75), 30, (0, 0, 255, 255), -1)  # Красный внутренний круг
 
-# Сохраняем размеры
 earring_h, earring_w = earring_img.shape[:2]
 
-# 2. ФУНКЦИЯ ДЛЯ НАЛОЖЕНИЯ СЕРЕЖКИ
 def overlay_earring_safe(background, earring, x, y, scale=1.0):
-    """Безопасное наложение сережки"""
     if earring.shape[2] != 4:
         earring = cv2.cvtColor(earring, cv2.COLOR_BGR2BGRA)
     
     h, w = earring.shape[:2]
     
-    # Масштабирование
     if scale != 1.0:
         new_w = max(1, int(w * scale))
         new_h = max(1, int(h * scale))
@@ -60,7 +45,6 @@ def overlay_earring_safe(background, earring, x, y, scale=1.0):
     
     h_scaled, w_scaled = earring_scaled.shape[:2]
     
-    # Область наложения (центрируем)
     y1 = max(0, y - h_scaled//2)
     y2 = min(background.shape[0], y + h_scaled//2)
     x1 = max(0, x - w_scaled//2)
@@ -69,11 +53,9 @@ def overlay_earring_safe(background, earring, x, y, scale=1.0):
     if y1 >= y2 or x1 >= x2:
         return background
     
-    # Размеры области
     region_h = y2 - y1
     region_w = x2 - x1
     
-    # Часть сережки для наложения
     earring_y1 = max(0, h_scaled//2 - y)
     earring_y2 = earring_y1 + region_h
     earring_x1 = max(0, w_scaled//2 - x)
@@ -84,11 +66,9 @@ def overlay_earring_safe(background, earring, x, y, scale=1.0):
     
     earring_part = earring_scaled[earring_y1:earring_y2, earring_x1:earring_x2]
     
-    # Корректировка размеров
     if earring_part.shape[0] != region_h or earring_part.shape[1] != region_w:
         earring_part = cv2.resize(earring_part, (region_w, region_h))
     
-    # Альфа-смешивание
     if earring_part.shape[2] == 4:
         alpha = earring_part[:, :, 3] / 255.0
         for c in range(3):
@@ -98,9 +78,7 @@ def overlay_earring_safe(background, earring, x, y, scale=1.0):
     
     return background
 
-# 3. ЗАХВАТ С ВЕБ-КАМЕРЫ
-print("\nОткрываю веб-камеру...")
-cap = cv2.VideoCapture(0)  # 0 - первая камера, 1 - вторая и т.д.
+cap = cv2.VideoCapture(0)
 
 if not cap.isOpened():
     print("ОШИБКА: Не удалось открыть веб-камеру!")
@@ -112,11 +90,6 @@ height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 fps = cap.get(cv2.CAP_PROP_FPS)
 print(f"Камера: {width}x{height} пикселей, {fps} FPS")
 
-# Опционально: настройка разрешения
-# cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-
-# 4. ОСНОВНОЙ ЦИКЛ ОБРАБОТКИ
 print("\nЗапуск обработки в реальном времени...")
 print("Нажмите 'q' для выхода")
 print("Нажмите 's' для сохранения скриншота")
@@ -139,7 +112,7 @@ while True:
     
     frame_count += 1
     
-    # Зеркальное отражение (для естественного вида)
+    # Зеркальное отражение
     frame = cv2.flip(frame, 1)
     
     # Детекция уха
@@ -153,10 +126,10 @@ while True:
         if result.keypoints is not None and len(result.keypoints.data) > 0:
             kpt_data = result.keypoints.data[0].cpu().numpy()
             
-            if len(kpt_data) > 0 and kpt_data[0, 2] > 0.3:  # visibility > 0.3
+            if len(kpt_data) > 0 and kpt_data[0, 2] > 0.3:
                 x, y = int(kpt_data[0, 0]), int(kpt_data[0, 1])
                 
-                # Сглаживание движения (усреднение последних позиций)
+                # Сглаживание движения
                 last_positions.append((x, y))
                 if len(last_positions) > 5:
                     last_positions.pop(0)
@@ -171,7 +144,6 @@ while True:
                     bbox = result.boxes.data[0][:4].cpu().numpy()
                     ear_width = bbox[2] - bbox[0]
                     
-                    # Увеличиваем сережку (0.75 = 75% от ширины уха)
                     target_size = ear_width * 0.75
                     scale_used = target_size / max(earring_w, earring_h)
                     scale_used = max(0.3, min(1.0, scale_used))
@@ -192,7 +164,6 @@ while True:
                     cv2.putText(frame, f"Ear", (x+10, y), 
                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
     
-    # Статус на экране
     status_color = (0, 255, 0) if ear_detected else (0, 0, 255)
     status_text = "EAR DETECTED" if ear_detected else "NO EAR"
     
@@ -205,14 +176,11 @@ while True:
     cv2.putText(frame, f"Scale: {scale_used:.2f}", (20, 110), 
                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
     
-    # Инструкции
     cv2.putText(frame, "Q: Quit | S: Save | F: Fullscreen | D: Debug", 
                (20, height - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
     
-    # Показываем кадр
     cv2.imshow('Virtual Earring', frame)
     
-    # Обработка клавиш
     key = cv2.waitKey(1) & 0xFF
     
     if key == ord('q'):  # Выход
@@ -240,11 +208,9 @@ while True:
         earring_h, earring_w = earring_img.shape[:2]
         print(f"Уменьшена сережка: {earring_w}x{earring_h}")
 
-# 5. ЗАВЕРШЕНИЕ РАБОТЫ
 cap.release()
 cv2.destroyAllWindows()
 
-# Статистика
 print(f"\n{'='*60}")
 print("СТАТИСТИКА РАБОТЫ:")
 print(f"{'='*60}")
@@ -253,8 +219,3 @@ print(f"Кадров с сережкой: {processed_count}")
 if frame_count > 0:
     print(f"Успешность: {processed_count/frame_count*100:.1f}%")
 print(f"{'='*60}")
-
-# Опционально: сохранение последнего кадра
-if frame_count > 0:
-    cv2.imwrite("last_frame.jpg", frame)
-    print(f"Последний кадр сохранен: last_frame.jpg")
